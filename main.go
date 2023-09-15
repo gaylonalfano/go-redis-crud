@@ -3,9 +3,13 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi"
 )
 
 func main() {
+	router := chi.NewRouter()
+
 	// Storing 'server' as a pointer, which means we're storing the memory
 	// address, NOT as a value!
 	server := &http.Server{
