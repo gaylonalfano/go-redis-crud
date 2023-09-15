@@ -9,12 +9,14 @@ import (
 
 func main() {
 	router := chi.NewRouter()
+	router.Get("/hello", basicHandler)
 
 	// Storing 'server' as a pointer, which means we're storing the memory
 	// address, NOT as a value!
 	server := &http.Server{
-		Addr:    ":3000",
-		Handler: http.HandlerFunc(basicHandler),
+		Addr: ":3000",
+		// Handler: http.HandlerFunc(basicHandler),
+		Handler: router,
 	}
 
 	err := server.ListenAndServe()
