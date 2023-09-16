@@ -5,10 +5,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
 	router := chi.NewRouter()
+	router.Use(middleware.Logger)
 	router.Get("/hello", basicHandler)
 
 	// Storing 'server' as a pointer, which means we're storing the memory
