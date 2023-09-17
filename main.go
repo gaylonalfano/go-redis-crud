@@ -3,14 +3,30 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
 
 	"github.com/gaylonalfano/go-turso-htmx-orders/application"
 )
 
+// NOTE:
+// - Get Docker going: docker run -p 6379:6379 redis:latest
+// - Get our server going: go run main.go
+
 func main() {
 	app := application.New()
 
-	err := app.Start(context.TODO())
+	// NOTE: Create/derive a root Context.
+	// Learn more about Context and how it can signal a graceful shutdown
+	// whenever a SIGINT (i.e. Ctrl-C) is triggered (os.Interrupt)
+	// REF: https://youtu.be/PWukxD1DC0I?t=472
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	// NOTE: Could also use defer cancel() just under the initialization
+	// of ctx, cancel. This defer will run at this end of the current
+	// function it resides in; meaning I could call cancel() at end of main().
+	defer cancel()
+
+	err := app.Start(ctx)
 	if err != nil {
 		fmt.Println("Failed to start app:", err)
 	}
