@@ -6,7 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// JSON tags adds a struct tag for JSON type
+// JSON tags adds a struct tag for JSON type, which allows
+// use to encode/decode to JSON using standard libary
+// NOTE: Using a combination of timestamps to represent
+// the different order statuses. Neat.
 type Order struct {
 	OrderID     uint64     `json:"order_id"`
 	CustomerID  uuid.UUID  `json:"customer_id"`
