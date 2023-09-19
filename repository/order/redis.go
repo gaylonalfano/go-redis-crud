@@ -31,10 +31,35 @@ func (r *RedisRepo) Insert(ctx context.Context, order model.Order) error {
 
 	key := generateOrderIDKey(order.OrderID)
 
+	// U: Atomic transaction that uses a new pipeline client
+	// that wraps queued commands in Redis' MULTI/EXEC. This will
+	// replace our old/original r.Client
+	// REF: https://youtu.be/qCv-q37qjZU?t=822
+	txn := r.Client.TxPipeline()
+
 	// Set() overwrites. SetNX() overwrites if not exists.
-	res := r.Client.SetNX(ctx, key, string(data), 0)
+	res := txn.SetNX(ctx, key, string(data), 0)
 	if err := res.Err(); err != nil {
+		txn.Discard()
 		return fmt.Errorf("Failed to set: %w", err)
+	}
+
+	// NOTE: For pagination, we don't want to fetch all orders at once, so
+	// we're adding a Set (Q: Is this a Redis-specific thing?) that only
+	// holds the order IDs for faster FindAll(). However, to keep the db
+	// and the set in sync, we use an atomic transaction that will fail
+	// if either part fails (like Solana txs). Prevents partial state.
+	// NOTE: The set is simply something like this:
+	// "orders": "id1, id2, id3, ..."
+	if err := txn.SAdd(ctx, "orders", key).Err(); err != nil {
+		txn.Discard()
+		return fmt.Errorf("Failed to add to orders set: %w", err)
+	}
+
+	// U: No buffered Pipeline commands will execute and send to
+	// the Redis server until we commit them
+	if _, err := txn.Exec(ctx); err != nil {
+		return fmt.Errorf("Failed to exec: %w", err)
 	}
 
 	return nil
@@ -69,11 +94,28 @@ func (r *RedisRepo) FindByID(ctx context.Context, id uint64) (model.Order, error
 func (r *RedisRepo) DeleteByID(ctx context.Context, id uint64) error {
 	key := generateOrderIDKey(id)
 
-	err := r.Client.Del(ctx, key).Err()
+	// U: Using atomic transaction pipeline client instead for pagination
+	// to keep 'orders' and the orders set in sync.
+	txn := r.Client.TxPipeline()
+
+	err := txn.Del(ctx, key).Err()
 	if errors.Is(err, redis.Nil) {
+		txn.Discard()
 		return ErrNotExist
 	} else if err != nil {
+		txn.Discard()
 		return fmt.Errorf("Failed to delete order: %w", err)
+	}
+
+	// U: Remove the id from the orders set
+	if err := txn.SRem(ctx, "orders", key).Err(); err != nil {
+		txn.Discard()
+		return fmt.Errorf("Failed to remove from orders set: %w", err)
+	}
+
+	// Send the queued pipeline command buffers to redis server
+	if _, err := txn.Exec(ctx); err != nil {
+		return fmt.Errorf("Failed to exec: %w", err)
 	}
 
 	return nil
@@ -97,4 +139,67 @@ func (r *RedisRepo) Update(ctx context.Context, order model.Order) error {
 	}
 
 	return nil
+}
+
+// In order to support pagination, rather than fetching all at once,
+// we create a new type with a couple properties we can use to help
+type FindAllPage struct {
+	Size   uint64 // aka Count
+	Offset uint64 // aka Cursor
+}
+
+type FindResult struct {
+	Orders []model.Order
+	Cursor uint64
+}
+
+func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, error) {
+	// Let's get all the IDs within the specified page range
+	res := r.Client.SScan(ctx, "orders", page.Offset, "*", int64(page.Size))
+
+	// Now let's extract each piece from the res.Result()
+	// TODO: Using a set returns unordered values. There is an OrderedSet Redis option,
+	// but that could be an extension exercise
+	keys, cursor, err := res.Result()
+	if err != nil {
+		return FindResult{}, fmt.Errorf("Failed to get order ids from set: %w", err)
+	}
+
+	// Check the 'keys' size. If keys are empty, then return empty list
+	if len(keys) == 0 {
+		return FindResult{
+			Orders: []model.Order{},
+			Cursor: 0,
+		}, nil
+	}
+
+	// We only have the IDs. Now time to get all the full values for each key
+	xs, err := r.Client.MGet(ctx, keys...).Result()
+	if err != nil {
+		return FindResult{}, fmt.Errorf("Failed to get order values from keys: %w", err)
+	}
+
+	// Unwrap these orders values into an orders slice (for pagination)
+	orders := make([]model.Order, len(xs))
+
+	// Iterate over each element and case each to a string
+	for i, x := range xs {
+		x := x.(string)
+		var order model.Order
+
+		// Then, Unmarshal (decode) string (x) into an Order struct
+		// which we'll store in our orders slice at the current index (i)
+		err := json.Unmarshal([]byte(x), &order)
+		if err != nil {
+			return FindResult{}, fmt.Errorf("Failed to decode order json: %w", err)
+		}
+
+		orders[i] = order
+	}
+
+	// Return our FindResult with orders and the next cursor value
+	return FindResult{
+		Orders: orders,
+		Cursor: cursor,
+	}, nil
 }
