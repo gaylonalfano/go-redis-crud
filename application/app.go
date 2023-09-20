@@ -19,9 +19,13 @@ type App struct {
 func New() *App {
 	// Create an instance of our App type and assign to 'app' variable
 	app := &App{
-		router: loadRoutes(),
-		rdb:    redis.NewClient(&redis.Options{}),
+		rdb: redis.NewClient(&redis.Options{}),
 	}
+
+	// U: Now that we've changed it to (a *App) loadRoutes(),
+	// we can just call it directly on the App, since we've already
+	// assigned the a.router property to be our router
+	app.loadRoutes()
 
 	return app
 }

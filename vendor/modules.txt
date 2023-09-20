@@ -8,6 +8,9 @@ github.com/dgryski/go-rendezvous
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
 github.com/go-chi/chi/v5/middleware
+# github.com/google/uuid v1.3.1
+## explicit
+github.com/google/uuid
 # github.com/redis/go-redis/v9 v9.1.0
 ## explicit; go 1.18
 github.com/redis/go-redis/v9
