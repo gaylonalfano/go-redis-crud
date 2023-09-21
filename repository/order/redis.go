@@ -18,7 +18,7 @@ type RedisRepo struct {
 }
 
 func generateOrderIDKey(id uint64) string {
-	return fmt.Sprintln("order:%d", id)
+	return fmt.Sprintf("order:%d", id)
 }
 
 // NOTE: Redis is a k:v store, stored as string, so we're using the JSON
@@ -158,7 +158,7 @@ func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, 
 	res := r.Client.SScan(ctx, "orders", page.Offset, "*", int64(page.Size))
 
 	// Now let's extract each piece from the res.Result()
-	// TODO: Using a set returns unordered values. There is an OrderedSet Redis option,
+	// NOTE: Using a set returns unordered values. There is an OrderedSet Redis option,
 	// but that could be an extension exercise
 	keys, cursor, err := res.Result()
 	if err != nil {
