@@ -161,6 +161,9 @@ func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, 
 	// NOTE: Using a set returns unordered values. There is an OrderedSet Redis option,
 	// but that could be an extension exercise
 	keys, cursor, err := res.Result()
+
+	// FIXME: res.Result().cursor is always 0, so never get response.next for pagination
+	fmt.Println("res.Result().cursor:", cursor)
 	if err != nil {
 		return FindResult{}, fmt.Errorf("Failed to get order ids from set: %w", err)
 	}
@@ -169,7 +172,7 @@ func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, 
 	if len(keys) == 0 {
 		return FindResult{
 			Orders: []model.Order{},
-			Cursor: 0,
+			// Cursor: 0,
 		}, nil
 	}
 

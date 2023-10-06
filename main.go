@@ -12,6 +12,8 @@ import (
 // NOTE:
 // - Get Docker going: docker run -p 6379:6379 redis:latest
 // - Get our server going: go run main.go
+// - Then start using GET/POST requests to add data
+// - Use redis-cli command to the GET "order:XXXX" and SMEMBERS orders
 
 func main() {
 	app := application.New()
