@@ -10,16 +10,20 @@ import (
 )
 
 type App struct {
-	// Give this router type a general type, so it's uncoupled from Chi
+	// Give this router type a general type (http.Handler), so it's uncoupled from Chi
 	router http.Handler
 	rdb    *redis.Client
+	config Config
 }
 
 // Constructor method returns a pointer to our instance of the App type
-func New() *App {
+func New(config Config) *App {
 	// Create an instance of our App type and assign to 'app' variable
 	app := &App{
-		rdb: redis.NewClient(&redis.Options{}),
+		rdb: redis.NewClient(&redis.Options{
+			Addr: config.RedisAddress,
+		}),
+		config: config,
 	}
 
 	// U: Now that we've changed it to (a *App) loadRoutes(),
@@ -36,7 +40,7 @@ func (a *App) Start(ctx context.Context) error {
 	// Storing 'server' as a pointer, which means we're storing the memory
 	// address, NOT as a value!
 	server := &http.Server{
-		Addr:    ":3000",
+		Addr:    fmt.Sprintf(":%d", a.config.ServerPort),
 		Handler: a.router,
 	}
 
@@ -101,7 +105,6 @@ func (a *App) Start(ctx context.Context) error {
 		defer cancel()
 
 		return server.Shutdown(timeout)
-
 	}
 
 	// NOTE: Basic error channel set up with optional 'open' boolean.

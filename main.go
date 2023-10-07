@@ -15,8 +15,18 @@ import (
 // - Then start using GET/POST requests to add data
 // - Use redis-cli command to the GET "order:XXXX" and SMEMBERS orders
 
+// TODO: Future enhancements:
+// - Add GoDotEnv package to autoload ENV vars
+// - Consider combining repository, model, handler packages into one 'order' package
+//    -- e.g., Create a root dir 'order' then order/{model,redisrepo,handler}.go
+// - Use a Go interface: type Repo interface {Insert() error, ... FindAll() (FindResult, error)}
+//    -- This would allow to swap datastores. type Order struct { Repo Repo }
+// - Swap out a new data store (PG, Turso, etc). See if Order data in PG still works
+// - Add testing
+
 func main() {
-	app := application.New()
+	// U: Use our custom LoadConfig() helper to get instance of Config
+	app := application.New(application.LoadConfig())
 
 	// NOTE: Create/derive a root Context.
 	// Learn more about Context and how it can signal a graceful shutdown
