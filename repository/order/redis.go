@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gaylonalfano/go-turso-htmx-orders/model"
+	"github.com/gaylonalfano/go-redis-crud/model"
 	"github.com/redis/go-redis/v9"
 )
 

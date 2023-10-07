@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/gaylonalfano/go-turso-htmx-orders/application"
+	"github.com/gaylonalfano/go-redis-crud/application"
 )
 
 // NOTE:

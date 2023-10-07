@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/gaylonalfano/go-turso-htmx-orders/model"
-	"github.com/gaylonalfano/go-turso-htmx-orders/repository/order"
+	"github.com/gaylonalfano/go-redis-crud/model"
+	"github.com/gaylonalfano/go-redis-crud/repository/order"
 )
 
 type Order struct {

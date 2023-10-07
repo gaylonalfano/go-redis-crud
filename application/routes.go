@@ -3,8 +3,8 @@ package application
 import (
 	"net/http"
 
-	"github.com/gaylonalfano/go-turso-htmx-orders/handler"
-	"github.com/gaylonalfano/go-turso-htmx-orders/repository/order"
+	"github.com/gaylonalfano/go-redis-crud/handler"
+	"github.com/gaylonalfano/go-redis-crud/repository/order"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
