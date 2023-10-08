@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <script
+      src="https://unpkg.com/htmx.org@1.9.6"
+      integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <!-- Main -->
+    <main class="container">
+      <div class="grid">
+        <section id="order-list-section">
+          <h2>Orders</h2>
+          <ul id="order-list">
+            {{ range . }} {{ block "order-list-element" .}}
+            <li>{{ . }}</li>
+            <!-- <li>{{ .OrderID }} - {{ .CustomerID }}</li> -->
+            {{ end }} {{ end }}
+          </ul>
+        </section>
+
+        <!-- <section id="add-order"> -->
+        <!--   <h2>Add Order</h2> -->
+        <!--   <form -->
+        <!--     hx-post="/add-film/" -->
+        <!--     hx-target="#film-list" -->
+        <!--     hx-swap="beforeend" -->
+        <!--     _='on submit add button[aria-busy="true"] to <button/>' -->
+        <!--   > -->
+        <!--     <div class="grid"> -->
+        <!--       <input -->
+        <!--         type="text" -->
+        <!--         name="film-title" -->
+        <!--         placeholder="Pulp Fiction" -->
+        <!--         aria-label="Film Title" -->
+        <!--         required -->
+        <!--       /> -->
+        <!--       <input -->
+        <!--         type="text" -->
+        <!--         name="film-director" -->
+        <!--         placeholder="Quentin Tarantino" -->
+        <!--         aria-label="Film Director" -->
+        <!--         required -->
+        <!--       /> -->
+        <!--       <button type="submit" aria-busy="false">Submit</button> -->
+        <!--     </div> -->
+        <!--   </form> -->
+        <!-- </section> -->
+      </div>
+    </main>
+    <script>
+      document.body.addEventListener("submit", async (e) => {
+        console.log("SUBMIT: ", e);
+        // NOTE: Couldn't get hx-indicator="#indicator" & .htmx-indicator on button to work
+        // Using Pico's approach instead
+        // Add aria-busy="true" to #indicator
+        const btn = e.submitter;
+        console.log(btn.attributes["aria-busy"].value);
+        btn.attributes["aria-busy"].value = "true";
+        await new Promise((r) => setTimeout(r, 1000));
+        btn.attributes["aria-busy"].value = "false";
+        e.srcElement.reset();
+      });
+    </script>
+  </body>
+</html>

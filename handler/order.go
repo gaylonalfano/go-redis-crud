@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"math/rand"
 	"net/http"
 	"strconv"
+	// "text/template"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -114,6 +116,17 @@ func (h *Order) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(data)
+
+	// U: Experimenting with Go Templates + HTMX
+	// t := template.Must(template.ParseFiles("index.html"))
+	t := template.Must(template.New("index.html").Parse("index.html"))
+
+	// Q: What data to pass? Encoded JSON?
+	// Q: Should I use text/template package instead of html/template?
+	// t.ExecuteTemplate(w, "order-list-element", response.Items) // json output
+	// t.ExecuteTemplate(w, "order-list-element", data)
+	t.Execute(w, data)
+
 }
 
 func (h *Order) GetByID(w http.ResponseWriter, r *http.Request) {
